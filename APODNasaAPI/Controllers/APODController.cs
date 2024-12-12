@@ -30,81 +30,28 @@ namespace APODNasaAPI.Controllers
             }
         }
 
-        //// Other methods...
+        //    // GetImageByDay
 
-        //// GET: APODController
-        //public ActionResult Index()
-        //{
-        //    return View();
-        //}
+        [HttpGet("{date}", Name = "GetImageByDay")]
+        public async Task<IActionResult> GetImageByDay(DateTime date)
+        {
+            string url = "https://api.nasa.gov/planetary/apod?api_key=" + apiKey.APODkey + "&date=" + date.ToString("yyyy-MM-dd");
+            using (HttpClient client = new HttpClient())
+            {
+                HttpResponseMessage response = await client.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    return Ok(responseBody);
+                }
+                else
+                {
+                    return StatusCode((int)response.StatusCode, response.ReasonPhrase);
+                }
+            }
+        }
 
-        //// GET: APODController/Details/5
-        //public ActionResult Details(int id)
-        //{
-        //    return View();
-        //}
 
-        //// GET: APODController/Create
-        //public ActionResult Create()
-        //{
-        //    return View();
-        //}
-
-        //// POST: APODController/Create
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public ActionResult Create(IFormCollection collection)
-        //{
-        //    try
-        //    {
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    catch
-        //    {
-        //        return View();
-        //    }
-        //}
-
-        //// GET: APODController/Edit/5
-        //public ActionResult Edit(int id)
-        //{
-        //    return View();
-        //}
-
-        //// POST: APODController/Edit/5
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public ActionResult Edit(int id, IFormCollection collection)
-        //{
-        //    try
-        //    {
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    catch
-        //    {
-        //        return View();
-        //    }
-        //}
-
-        //// GET: APODController/Delete/5
-        //public ActionResult Delete(int id)
-        //{
-        //    return View();
-        //}
-
-        //// POST: APODController/Delete/5
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public ActionResult Delete(int id, IFormCollection collection)
-        //{
-        //    try
-        //    {
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    catch
-        //    {
-        //        return View();
-        //    }
-        //}
+       
     }
 }
