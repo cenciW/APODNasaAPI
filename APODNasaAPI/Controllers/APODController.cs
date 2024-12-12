@@ -1,76 +1,4 @@
-﻿//using Microsoft.AspNetCore.Mvc;
-//using System.Net.Http;
-//using System.Text.Json;
-//using System.Threading.Tasks;
-
-//namespace APODNasaAPI.Controllers
-//{
-//    [ApiController]
-//    [Route("api/[controller]")]
-//    public class APODController : ControllerBase
-//    {
-//        private readonly IHttpClientFactory _httpClientFactory;
-//        private const string BaseUrl = "https://api.nasa.gov/planetary/apod";
-//        private readonly string _apiKey;
-
-//        public APODController(IHttpClientFactory httpClientFactory)
-//        {
-//            _httpClientFactory = httpClientFactory;
-//            _apiKey = apiKey.APODkey; // Replace with dependency injection or configuration
-//        }
-
-//        // Fetch data from the API
-//        private async Task<IActionResult> FetchDataAsync(string endpoint)
-//        {
-//            using var client = _httpClientFactory.CreateClient();
-//            HttpResponseMessage response = await client.GetAsync(endpoint);
-
-//            if (response.IsSuccessStatusCode)
-//            {
-//                var responseBody = await response.Content.ReadAsStringAsync();
-//                return Ok(JsonSerializer.Deserialize<object>(responseBody)); // Ensure the response is properly formatted
-//            }
-
-//            return StatusCode((int)response.StatusCode, response.ReasonPhrase);
-//        }
-
-//        // Test get request
-//        [HttpGet("test-connection")]
-//        public async Task<IActionResult> TestConnection()
-//        {
-//            var endpoint = $"{BaseUrl}?api_key={_apiKey}";
-//            return await FetchDataAsync(endpoint);
-//        }
-
-
-//        //GetImageByDay
-//        [HttpGet("image/{date}")]
-//        public async Task<IActionResult> GetImageByDay([FromRoute] string date)
-//        {
-//            var endpoint = $"{BaseUrl}?api_key={_apiKey}&date={date}";
-//            return await FetchDataAsync(endpoint);
-//        }
-
-
-//        // GetRandomImageByAmount
-//        [HttpGet("images/{startDate}/{endDate}")]
-//        public async Task<IActionResult> GetImagesBetweenDates([FromRoute] string startDate, [FromRoute] string endDate)
-//        {
-//            var endpoint = $"{BaseUrl}?api_key={_apiKey}&start_date={startDate}&end_date={endDate}";
-//            return await FetchDataAsync(endpoint);
-//        }
-
-//        // GetRandomImageByAmount
-//        [HttpGet("random/{amount}")]
-//        public async Task<IActionResult> GetRandomImages([FromRoute] int amount)
-//        {
-//            var endpoint = $"{BaseUrl}?api_key={_apiKey}&count={amount}";
-//            return await FetchDataAsync(endpoint);
-//        }
-//    }
-//}
-
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -92,31 +20,24 @@ namespace APODNasaAPI.Controllers
         {
             _httpClientFactory = httpClientFactory;
             _logger = logger;
-            _apiKey = apiKey.APODkey; // Replace with dependency injection or configuration
+            _apiKey = ApiKey.APODkey;
         }
 
         private async Task<IActionResult> FetchDataAsync(string endpoint)
         {
             using var client = _httpClientFactory.CreateClient();
-            _logger.LogInformation("Fetching data from endpoint: {Endpoint}", endpoint);
+            _logger.LogInformation("Buscando dados do Endpoint: {Endpoint}", endpoint);
 
             HttpResponseMessage response = await client.GetAsync(endpoint);
 
             if (response.IsSuccessStatusCode)
             {
                 var responseBody = await response.Content.ReadAsStringAsync();
-                return Ok(JsonSerializer.Deserialize<object>(responseBody)); // Ensure the response is properly formatted
+                return Ok(JsonSerializer.Deserialize<object>(responseBody));
             }
 
-            _logger.LogWarning("Request failed with status code {StatusCode}: {ReasonPhrase}", (int)response.StatusCode, response.ReasonPhrase);
+            _logger.LogWarning("Requisição falhou, código: {StatusCode}: {ReasonPhrase}", (int)response.StatusCode, response.ReasonPhrase);
             return StatusCode((int)response.StatusCode, response.ReasonPhrase);
-        }
-
-        [HttpGet("test-connection")]
-        public async Task<IActionResult> TestConnection()
-        {
-            var endpoint = $"{BaseUrl}?api_key={_apiKey}";
-            return await FetchDataAsync(endpoint);
         }
 
         [HttpGet("image/{date}")]
@@ -124,8 +45,8 @@ namespace APODNasaAPI.Controllers
         {
             if (!DateTime.TryParse(date, out _))
             {
-                _logger.LogWarning("Invalid date format: {Date}", date);
-                return BadRequest("Date must be in the format 'yyyy-MM-dd'.");
+                _logger.LogWarning("Formato de data inválido: {Date}", date);
+                return BadRequest(new { error = "A data deve estar nesse formato: 'yyyy-MM-dd'." });
             }
 
             var endpoint = $"{BaseUrl}?api_key={_apiKey}&date={date}";
@@ -135,19 +56,35 @@ namespace APODNasaAPI.Controllers
         [HttpGet("images/{startDate}/{endDate}")]
         public async Task<IActionResult> GetImagesBetweenDates([FromRoute] string startDate, [FromRoute] string endDate)
         {
-            if (!DateTime.TryParse(startDate, out var start) || !DateTime.TryParse(endDate, out var end))
+
+            if (!DateTime.TryParse(startDate, out DateTime start))
             {
-                _logger.LogWarning("Invalid date range: startDate={StartDate}, endDate={EndDate}", startDate, endDate);
-                return BadRequest("Dates must be in the format 'yyyy-MM-dd'.");
+                _logger.LogWarning("Formato de data inválido: {Date}", start);
+                return BadRequest(new { error = "A data inicial inserida deve ser válida" });
             }
 
-            if ((end - start).TotalDays > 100)
+            if (!DateTime.TryParse(endDate, out DateTime end))
             {
-                _logger.LogWarning("Date range too large: startDate={StartDate}, endDate={EndDate}", startDate, endDate);
-                return BadRequest("The date range cannot exceed 100 days.");
+                _logger.LogWarning("Formato de data inválido: {Date}", endDate);
+                return BadRequest(new { error = "A data final inserida deve ser válida" });
             }
+
+            if (DateTime.Compare(start, end) > 0)
+            {
+                _logger.LogWarning("Intervalo de datas inválido: Data de Inicio={StartDate}, Data de Fim={EndDate}", startDate, endDate);
+                return BadRequest(new { error = "A data final deve ser maior que a atual" });
+            }
+
+            if (end.Subtract(start).Days > 30)
+            {
+                _logger.LogWarning("Intervalo de datas muito grande: Data de Inicio={StartDate}, Data de Fim={EndDate}", startDate, endDate);
+                return BadRequest(new { error = "A diferença entre datas deve ser menor que 30 dias" });
+            }
+
 
             var endpoint = $"{BaseUrl}?api_key={_apiKey}&start_date={startDate}&end_date={endDate}";
+            _logger.LogInformation("Endpoint gerado: {Endpoint}", endpoint);
+
             return await FetchDataAsync(endpoint);
         }
 
@@ -156,8 +93,8 @@ namespace APODNasaAPI.Controllers
         {
             if (amount <= 0)
             {
-                _logger.LogWarning("Invalid amount requested: {Amount}", amount);
-                return BadRequest("Amount must be a positive integer.");
+                _logger.LogWarning("Quantidade de imagens solicitadas inválido: {Amount}", amount);
+                return BadRequest(new { error = "Quantidade de imagens precisa ser um número positivo." });
             }
 
             var endpoint = $"{BaseUrl}?api_key={_apiKey}&count={amount}";
