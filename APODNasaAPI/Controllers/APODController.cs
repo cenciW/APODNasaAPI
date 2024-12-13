@@ -81,7 +81,6 @@ namespace APODNasaAPI.Controllers
                 return BadRequest(new { error = "A diferença entre datas deve ser menor que 30 dias" });
             }
 
-
             var endpoint = $"{BaseUrl}?api_key={_apiKey}&start_date={startDate}&end_date={endDate}";
             _logger.LogInformation("Endpoint gerado: {Endpoint}", endpoint);
 
