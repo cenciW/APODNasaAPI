@@ -59,7 +59,7 @@ namespace APODNasaAPI.Controllers
 
             if (!DateTime.TryParse(startDate, out DateTime start))
             {
-                _logger.LogWarning("Formato de data inválido: {Date}", start);
+                _logger.LogWarning("Formato de data inválido: {Date}", startDate);
                 return BadRequest(new { error = "A data inicial inserida deve ser válida" });
             }
 
@@ -83,6 +83,9 @@ namespace APODNasaAPI.Controllers
 
             var endpoint = $"{BaseUrl}?api_key={_apiKey}&start_date={startDate}&end_date={endDate}";
             _logger.LogInformation("Endpoint gerado: {Endpoint}", endpoint);
+            Console.WriteLine($"Endpoint gerado: {endpoint}");
+
+            Console.WriteLine($"Received request: start={start}, end={end}");
 
             return await FetchDataAsync(endpoint);
         }

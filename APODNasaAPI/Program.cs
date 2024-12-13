@@ -1,4 +1,18 @@
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Net.Http.Headers;
+
 var builder = WebApplication.CreateBuilder(args);
+
+//http not https    
+builder.WebHost.ConfigureKestrel(serverOpt =>
+{
+    serverOpt.ListenLocalhost(5000);
+    serverOpt.ListenAnyIP(5001, listenOptions =>
+    {
+        listenOptions.UseHttps();
+    });
+
+});
 
 // Add services to the container.
 
@@ -8,6 +22,19 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
 
+//allow any origin
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        builder =>
+        {
+            builder
+                .AllowAnyOrigin()
+                .WithHeaders(HeaderNames.AccessControlAllowHeaders, "Content-Type")
+                .AllowAnyMethod();
+
+        });
+});
 
 
 
@@ -18,10 +45,11 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    //app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+        //app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 }
 
-app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+//app.UseHttpsRedirection();
+//app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 
 app.UseAuthorization();
 
