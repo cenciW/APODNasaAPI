@@ -1,3 +1,4 @@
+using APODNasaAPI.Repositories;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Net.Http.Headers;
 
@@ -15,6 +16,8 @@ builder.WebHost.ConfigureKestrel(serverOpt =>
 });
 
 // Add services to the container.
+
+builder.Services.AddSingleton<APODRepository>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
