@@ -40,13 +40,20 @@ namespace APODNasaAPI.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var responseBody = await response.Content.ReadAsStringAsync();
-
                 if (multipleData)
                 {
                     ApodData[]? dataMultiple = JsonSerializer.Deserialize<ApodData[]>(responseBody);
 
 
                     for (int i = 0; i < dataMultiple?.Length;i++) {
+                        if (dataMultiple[i].Url.Contains("youtube.com"))
+                        {
+                            String videoId = dataMultiple[i].Url.Split("embed/")[1].Split("?")[0];
+                            
+                            dataMultiple[i].Url = $"https://img.youtube.com/vi/{videoId}/hqdefault.jpg";
+                        }
+
+
                         if (_podRepository.GetApodData(dataMultiple[i].Date) == null)
                             _podRepository.addData(dataMultiple[i]);
                     }
@@ -59,8 +66,8 @@ namespace APODNasaAPI.Controllers
 
 
                 ApodData? data = JsonSerializer.Deserialize<ApodData>(responseBody);
-                
-                _podRepository.addData(data);
+
+                if (_podRepository.GetApodData(data.Date) == null) _podRepository.addData(data);
 
                 return Ok(data.GetRaw());
             }
@@ -78,6 +85,7 @@ namespace APODNasaAPI.Controllers
                 _logger.LogWarning("Formato de data inválido: {Date}", date);
                 return BadRequest(new { error = "A data deve estar nesse formato: 'yyyy-MM-dd'." });
             }
+
             ApodData? apodDataCache = _podRepository.GetApodData(dateTime);
             if (apodDataCache != null)
             {
@@ -141,7 +149,9 @@ namespace APODNasaAPI.Controllers
             }
 
             Console.WriteLine("Retornando dados do cache");
-            return Ok(apodDatas.ToArray());
+
+            var formattedData = apodDatas?.Select(data => data.GetRaw());
+            return Ok(formattedData);
         }
 
         [HttpGet("random/{amount}")]

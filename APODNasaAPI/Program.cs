@@ -7,11 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 //http not https    
 builder.WebHost.ConfigureKestrel(serverOpt =>
 {
-    serverOpt.ListenLocalhost(5000);
-    serverOpt.ListenAnyIP(5001, listenOptions =>
-    {
-        listenOptions.UseHttps();
-    });
+    serverOpt.ListenAnyIP(5000);
+    serverOpt.ListenLocalhost(5001);
 
 });
 
